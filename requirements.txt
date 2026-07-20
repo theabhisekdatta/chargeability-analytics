@@ -1,2 +1,5 @@
 langchain-community
 pypdf
+langchain_experimental
+langchain_openai
+fastembed
