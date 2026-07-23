@@ -33,3 +33,21 @@
 | **Analytics Agent**      | Identifies trends, compares metrics, performs root-cause analysis, and generates business insights.  |
 | **Report Agent**         | Produces executive summaries, tables, and visualizations suitable for management.                    |
 | **Recommendation Agent** | Suggests actions such as reallocating resources, reducing bench time, or notifying managers.         |
+
+
+For chunking and Vector DB flow:
+PDF
+ ↓
+pages
+ ↓
+SemanticChunker(FastEmbed BGE)
+ ↓
+semantic_chunks
+ ↓
+QdrantVectorStore(FastEmbed BGE)
+ ↓
+Qdrant Cloud
+ ↓
+Retriever
+ ↓
+LLM

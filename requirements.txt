@@ -3,3 +3,5 @@ pypdf
 langchain_experimental
 langchain_openai
 fastembed
+qdrant_client
+langchain_qdrant
