@@ -5,3 +5,4 @@ langchain_openai
 fastembed
 qdrant_client
 langchain_qdrant
+langchain_groq
