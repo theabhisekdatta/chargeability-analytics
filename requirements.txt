@@ -6,3 +6,5 @@ fastembed
 qdrant_client
 langchain_qdrant
 langchain_groq
+langchain_google_genai
+fastmcp
