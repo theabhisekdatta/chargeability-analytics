@@ -51,3 +51,32 @@ Qdrant Cloud
 Retriever
  ↓
 LLM
+
+
+SQL Agent
+
+                 User
+                  │
+                  │ Natural Language
+                  ▼
+          ┌─────────────────┐
+          │   SQL Agent     │
+          └────────┬────────┘
+                   │
+             Database Schema
+                   │
+                   ▼
+          ┌─────────────────┐
+          │  SQL Generation │
+          │     LLM         │
+          └────────┬────────┘
+                   │
+                   ▼
+             PostgreSQL
+                   │
+                   ▼
+              SQL Result
+                   │
+                   ▼
+          Natural Language
+               Answer

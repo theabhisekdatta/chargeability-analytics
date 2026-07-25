@@ -1,12 +1,14 @@
 from mcp.server.fastmcp import FastMCP
-from rag_tool import RAGTool
+from rag.rag_tool import RAGTool
+from nl2sql.sql_tool import SQLTOOL
 
 
 mcp = FastMCP("Chargeability Analytics")
 
 rag = RAGTool()
+sql = SQLTOOL()
 
-
+# Tool 1 for the RAG pipeline: Ask documents from the knowledge base
 @mcp.tool()
 def ask_documents(question: str) -> str:
     """
@@ -37,13 +39,47 @@ def ask_documents(question: str) -> str:
     result = rag.ask(question)
     return result["answer"]
 
+# Tool 2: Generate SQL queries from natural language questions
+@mcp.tool()
+def generate_sql(question: str) -> str:
+    """
+    Generate a PostgreSQL SQL query from a natural language question.
+
+    The tool uses an LLM to convert the user's question into a valid SQL query
+    based on the schema of the Chargeability Analytics database.
+
+    Args:
+        question (str):
+            The user's natural language question related to the Chargeability
+            Analytics database.
+            Example:
+            "Which location has the highest average chargeability?"
+
+    Returns:
+        str:
+            A PostgreSQL SQL query generated from the user's question.
+            The query is guaranteed to be a SELECT statement and will only use
+            tables and columns that exist in the database schema.
+
+    Notes:
+        - The tool does not execute the generated SQL query; it only generates it.
+        - The generated SQL query adheres to PostgreSQL syntax and best practices.
+    """
+    sql_query = sql.generate_sql(question)
+    results = sql.execute_sql(sql_query)
+    return results
+
 # if __name__ == "__main__":
 #     rag = RAGTool()
-#     response = rag.ask(
-#         "What are "
+#     response = ask_documents(
 #         "What are Determining Expense Report Costs"
 #     )
-#     print(response["answer"])
+#     print(response)
+
+
+# if __name__ == "__main__":
+#     response = generate_sql("Which location has the lowest average chargeability?")
+#     print(response)
 
 
 if __name__ == "__main__":

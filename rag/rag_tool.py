@@ -6,8 +6,8 @@ from langchain_qdrant import QdrantVectorStore
 from langchain_groq import ChatGroq
 from langchain_core.runnables import RunnablePassthrough
 
-from embedding import JinaAPIEmbeddings
-from prompt import PromptTemplates
+from rag.embedding import JinaAPIEmbeddings
+from rag.prompt import PromptTemplates
 
 load_dotenv()
 
