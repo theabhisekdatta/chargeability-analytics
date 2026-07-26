@@ -9,3 +9,6 @@ langchain_groq
 langchain_google_genai
 fastmcp
 psycopg2-binary
+langgraph
+langchain
+fastapi

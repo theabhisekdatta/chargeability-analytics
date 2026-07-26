@@ -66,8 +66,16 @@ def generate_sql(question: str) -> str:
         - The generated SQL query adheres to PostgreSQL syntax and best practices.
     """
     sql_query = sql.generate_sql(question)
+
     results = sql.execute_sql(sql_query)
-    return results
+
+    answer = sql.generate_description(
+        question=question,
+        sql_query=sql_query,
+        results=results,
+    )
+
+    return answer
 
 # if __name__ == "__main__":
 #     rag = RAGTool()

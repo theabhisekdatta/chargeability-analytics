@@ -1,3 +1,4 @@
 .env
 nl2sql/data
 rag/docs
+test.ipynb

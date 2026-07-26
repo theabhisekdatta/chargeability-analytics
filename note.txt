@@ -1,38 +1,36 @@
-                         User
-                           │
-                           ▼
-                  Planner Agent
-                           │
-                Decide required tools
-                           │
-        ┌──────────────────┼──────────────────┐
-        ▼                  ▼                  ▼
-   SQL Agent         RAG Agent        Report Agent
-        │                  │                  │
-        ▼                  ▼                  ▼
-   SQL Database     Policy Documents    Report Generator
-        │                  │                  │
-        └──────────────────┼──────────────────┘
-                           ▼
-                  Analytics Agent
-                           │
-                           ▼
-               Recommendation Agent
-                           │
-                           ▼
-          Outlook / Teams / Jira / Power BI
+                    USER
+                      │
+                      ▼
+               ┌────────────┐
+               │ ROUTER LLM │
+               │   Groq     │
+               └─────┬──────┘
+                     │
+          ┌──────────┼──────────┐
+          ▼          ▼          ▼
+         RAG         SQL       BOTH
+          │          │          │
+          │       PostgreSQL    │
+          │          │          │
+          │       SQL Result    │
+          │          ↓          │
+          │       Groq LLM      │
+          │          │          │
+          └──────────┼──────────┘
+                     ▼
+                REVIEW LLM
+                     │
+              ┌──────┴──────┐
+              ▼             ▼
+          SATISFIED       NOT GOOD
+              │             │
+              ▼             ▼
+           REPORT       RAG/SQL/BOTH
+              │             │
+              ▼             └──────► REVIEW
+             USER
 
 
-
-
-| Agent                    | Responsibility                                                                                       |
-| ------------------------ | ---------------------------------------------------------------------------------------------------- |
-| **Planner Agent**        | Understands the user's question and decides which tools/agents to invoke.                            |
-| **SQL Agent**            | Converts natural language into SQL, validates it, executes it, and retrieves data.                   |
-| **RAG Agent**            | Searches staffing policies, utilization guidelines, SOPs, and project documents using vector search. |
-| **Analytics Agent**      | Identifies trends, compares metrics, performs root-cause analysis, and generates business insights.  |
-| **Report Agent**         | Produces executive summaries, tables, and visualizations suitable for management.                    |
-| **Recommendation Agent** | Suggests actions such as reallocating resources, reducing bench time, or notifying managers.         |
 
 
 For chunking and Vector DB flow:

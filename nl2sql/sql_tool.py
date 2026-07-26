@@ -3,6 +3,7 @@ from langchain_community.utilities import SQLDatabase
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 from sqlalchemy import text
+from langchain_core.prompts import ChatPromptTemplate
 
 
 load_dotenv()
@@ -69,3 +70,75 @@ class SQLTOOL:
             result = connection.execute(text(sql))
             rows = result.fetchall()
             return rows
+
+    def generate_description(
+        self,
+        question: str,
+        sql_query: str,
+        results
+    ) -> str:
+
+        prompt = ChatPromptTemplate.from_messages(
+                    [
+                        (
+                            "system",
+                            """
+        You are a data analytics assistant.
+
+        Convert the SQL query result into a concise,
+        natural-language answer for the user.
+
+        Rules:
+        - Answer the user's question directly.
+        - Use ONLY the provided SQL result.
+        - Do not invent information.
+        - Do not mention internal SQL processing.
+        - Keep the answer between 2 and 5 sentences.
+        - Include important numerical values.
+        - If the result is a ranking, clearly identify the top result.
+        - Use simple professional business language.
+        """
+                        ),
+                        (
+                            "human",
+                            """
+        User Question:
+        {question}
+
+        SQL Query:
+        {sql_query}
+
+        SQL Result:
+        {results}
+
+        Write a concise natural-language answer.
+        """
+                )
+            ]
+        )
+
+        chain = prompt | self.llm
+
+        response = chain.invoke(
+            {
+                "question": question,
+                "sql_query": sql_query,
+                "results": str(results),
+            }
+        )
+
+        return response.content
+
+    def ask(self, question: str) -> str:
+
+        sql_query = self.generate_sql(question)
+
+        results = self.execute_sql(sql_query)
+
+        answer = self.generate_description(
+            question=question,
+            sql_query=sql_query,
+            results=results,
+        )
+
+        return answer
