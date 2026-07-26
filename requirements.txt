@@ -12,3 +12,4 @@ psycopg2-binary
 langgraph
 langchain
 fastapi
+uvicorn
