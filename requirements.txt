@@ -13,3 +13,5 @@ langgraph
 langchain
 fastapi
 uvicorn
+pytest
+pytest-mock
