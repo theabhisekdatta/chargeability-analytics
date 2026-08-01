@@ -41,7 +41,7 @@ class RAGTool:
 
         self.retriever = self.vector_store.as_retriever(
             search_type="similarity",
-            search_kwargs={"k": 5}
+            search_kwargs={"k": 1}
         )
 
         # Prompt
@@ -49,7 +49,7 @@ class RAGTool:
 
         # LLM
         self.llm = ChatGroq(
-            model="llama-3.3-70b-versatile",
+            model="llama-3.1-8b-instant",
             api_key=self.GROQ_API_KEY,
             temperature=0
         )
