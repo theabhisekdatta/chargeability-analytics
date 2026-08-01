@@ -1,8 +1,10 @@
+import pytest
 from unittest.mock import Mock, patch
 
 from agent.router import RouteDecision, decide_route
 
 
+@pytest.mark.unit
 def test_router_selects_rag():
 
     expected = RouteDecision(
@@ -22,6 +24,7 @@ def test_router_selects_rag():
     assert result.route == "rag"
 
 
+@pytest.mark.unit
 def test_router_selects_sql():
 
     expected = RouteDecision(
@@ -41,12 +44,12 @@ def test_router_selects_sql():
     assert result.route == "sql"
 
 
+@pytest.mark.unit
 def test_router_selects_both():
 
     expected = RouteDecision(
         route="both",
         reason="Need both"
-
     )
 
     mock_chain = Mock()
@@ -55,7 +58,7 @@ def test_router_selects_both():
     with patch("agent.router.router_chain", mock_chain):
 
         result = decide_route(
-            "Why is Chennai chargeability lower?"
+            "Why is Chennai's chargeability lower than other locations?"
         )
 
     assert result.route == "both"
