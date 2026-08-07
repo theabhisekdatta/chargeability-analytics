@@ -1,12 +1,25 @@
+import os
+
 from mcp.server.fastmcp import FastMCP
+
 from rag.rag_tool import RAGTool
 from nl2sql.sql_tool import SQLTOOL
 
 
 mcp = FastMCP("Chargeability Analytics")
 
-rag = RAGTool()
-sql = SQLTOOL()
+
+def get_rag_tool() -> RAGTool:
+    if not hasattr(mcp, "_rag_tool") or mcp._rag_tool is None:
+        mcp._rag_tool = RAGTool()
+    return mcp._rag_tool
+
+
+def get_sql_tool() -> SQLTOOL:
+    if not hasattr(mcp, "_sql_tool") or mcp._sql_tool is None:
+        mcp._sql_tool = SQLTOOL()
+    return mcp._sql_tool
+
 
 # Tool 1 for the RAG pipeline: Ask documents from the knowledge base
 @mcp.tool()
@@ -26,8 +39,12 @@ def ask_documents(question: str) -> str:
         - Answers are generated only from the documents available in the
           Chargeability Analytics knowledge base.
     """
-    result = rag.ask(question)
-    return result["answer"]
+    try:
+        result = get_rag_tool().ask(question)
+        return result["answer"] if isinstance(result, dict) else str(result)
+    except Exception as exc:
+        return f"RAG Error: {exc}"
+
 
 # Tool 2: Generate SQL queries from natural language questions
 @mcp.tool()
@@ -39,7 +56,7 @@ def generate_sql(question: str) -> str:
         question (str):
             The user's natural language question related to the Chargeability
             Analytics database.
-            
+
     Returns:
         str:
             A PostgreSQL SQL query generated from the user's question.
@@ -48,33 +65,22 @@ def generate_sql(question: str) -> str:
         - The tool does not execute the generated SQL query; it only generates it.
         - The generated SQL query adheres to PostgreSQL syntax and best practices.
     """
-    sql_query = sql.generate_sql(question)
+    try:
+        sql_tool = get_sql_tool()
+        sql_query = sql_tool.generate_sql(question)
+        results = sql_tool.execute_sql(sql_query)
 
-    results = sql.execute_sql(sql_query)
-
-    answer = sql.generate_description(
-        question=question,
-        sql_query=sql_query,
-        results=results,
-    )
-
-    return answer
-
-# if __name__ == "__main__":
-#     rag = RAGTool()
-#     response = ask_documents(
-#         "What are Determining Expense Report Costs"
-#     )
-#     print(response)
-
-
-# if __name__ == "__main__":
-#     response = generate_sql("Which location has the lowest average chargeability?")
-#     print(response)
+        answer = sql_tool.generate_description(
+            question=question,
+            sql_query=sql_query,
+            results=results,
+        )
+        return answer
+    except Exception as exc:
+        return f"SQL Error: {exc}"
 
 
 if __name__ == "__main__":
-    # Start MCP server using stdio transport
     mcp.run(
-        transport= "streamable-http"
+        transport="streamable-http",
     )

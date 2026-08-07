@@ -13,5 +13,6 @@ langgraph
 langchain
 fastapi
 uvicorn
+python-dotenv
 pytest
 pytest-mock

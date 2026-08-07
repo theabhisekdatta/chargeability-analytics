@@ -1,9 +1,10 @@
 import os
-from langchain_community.utilities import SQLDatabase
+
 from dotenv import load_dotenv
+from langchain_community.utilities import SQLDatabase
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
 from sqlalchemy import text
-from langchain_core.prompts import ChatPromptTemplate
 
 
 load_dotenv()
@@ -13,21 +14,52 @@ class SQLTOOL:
 
     def __init__(self):
         self.GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+        self.POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
+        self.POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+        self.POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
+        self.POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
+        self.POSTGRES_DB = os.getenv("POSTGRES_DB", "chargeability_db")
+
+        self.llm = None
+        self.db = None
+        self._missing_config = None
+        self._initialize_if_possible()
+
+    def _initialize_if_possible(self):
+        required = {
+            "GROQ_API_KEY": self.GROQ_API_KEY,
+            "POSTGRES_PASSWORD": self.POSTGRES_PASSWORD,
+        }
+        missing = [name for name, value in required.items() if not value]
+        if missing:
+            self._missing_config = ", ".join(missing)
+            return
+
         self.llm = ChatGroq(
             model="llama-3.3-70b-versatile",
             api_key=self.GROQ_API_KEY,
-            temperature=0
+            temperature=0,
         )
         self.db = SQLDatabase.from_uri(
             "postgresql+psycopg2://"
-            f"{os.getenv('POSTGRES_USER')}:"
-            f"{os.getenv('POSTGRES_PASSWORD')}@"
-            f"{os.getenv('POSTGRES_HOST', 'localhost')}:"
-            f"{os.getenv('POSTGRES_PORT', '5432')}/"
-            f"{os.getenv('POSTGRES_DB', 'chargeability_db')}"
+            f"{self.POSTGRES_USER}:"
+            f"{self.POSTGRES_PASSWORD}@"
+            f"{self.POSTGRES_HOST}:"
+            f"{self.POSTGRES_PORT}/"
+            f"{self.POSTGRES_DB}"
         )
 
+    def _ensure_ready(self):
+        if self._missing_config:
+            raise RuntimeError(
+                "Missing required SQL environment variables: "
+                f"{self._missing_config}."
+            )
+        if self.llm is None or self.db is None:
+            raise RuntimeError("SQL tool failed to initialize.")
+
     def generate_sql(self, question: str):
+        self._ensure_ready()
         schema = self.db.get_table_info()
         prompt = f"""
         You are an expert PostgreSQL SQL developer.
@@ -56,15 +88,15 @@ class SQLTOOL:
     def clean_sql(self, sql: str) -> str:
         sql = sql.strip()
         if sql.startswith("```sql"):
-            sql = sql[len("```sql"):]
+            sql = sql[len("```sql") :]
         elif sql.startswith("```"):
-            sql = sql[len("```"):]
+            sql = sql[len("```") :]
         if sql.endswith("```"):
             sql = sql[:-3]
         return sql.strip()
 
-
     def execute_sql(self, sql: str):
+        self._ensure_ready()
         sql = self.clean_sql(sql)
         with self.db._engine.connect() as connection:
             result = connection.execute(text(sql))
@@ -75,14 +107,15 @@ class SQLTOOL:
         self,
         question: str,
         sql_query: str,
-        results
+        results,
     ) -> str:
+        self._ensure_ready()
 
         prompt = ChatPromptTemplate.from_messages(
-                    [
-                        (
-                            "system",
-                            """
+            [
+                (
+                    "system",
+                    """
         You are a data analytics assistant.
 
         Convert the SQL query result into a concise,
@@ -97,11 +130,11 @@ class SQLTOOL:
         - Include important numerical values.
         - If the result is a ranking, clearly identify the top result.
         - Use simple professional business language.
-        """
-                        ),
-                        (
-                            "human",
-                            """
+        """,
+                ),
+                (
+                    "human",
+                    """
         User Question:
         {question}
 
@@ -112,8 +145,8 @@ class SQLTOOL:
         {results}
 
         Write a concise natural-language answer.
-        """
-                )
+        """,
+                ),
             ]
         )
 
@@ -130,9 +163,7 @@ class SQLTOOL:
         return response.content
 
     def ask(self, question: str) -> str:
-
         sql_query = self.generate_sql(question)
-
         results = self.execute_sql(sql_query)
 
         answer = self.generate_description(
