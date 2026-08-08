@@ -2,3 +2,7 @@
 nl2sql/data
 rag/docs
 test.ipynb
+
+.venv/
+__pycache__/
+.pytest_cache/
