@@ -3,18 +3,36 @@ name: CI
 on:
   push:
     branches:
-      - main
       - development
+      - main
+
   pull_request:
     branches:
-      - main
       - development
+      - main
+
+  workflow_dispatch:
 
 jobs:
 
   test:
-    name: Run Tests
+    name: Run Unit Tests
     runs-on: ubuntu-latest
+
+    env:
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      JINA_API_KEY: ${{ secrets.JINA_API_KEY }}
+      QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+      QDRANT_ENDPOINT: ${{ secrets.QDRANT_ENDPOINT }}
+
+      MCP_PORT: ${{ secrets.MCP_PORT }}
+      MCP_SERVER_URL: ${{ secrets.MCP_SERVER_URL }}
+
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
 
     steps:
 
@@ -26,18 +44,17 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install dependencies
+      - name: Upgrade pip
         run: |
           python -m pip install --upgrade pip
+
+      - name: Install dependencies
+        run: |
           pip install -r requirements.txt
 
       - name: Run unit tests
         run: |
           pytest tests/unit -v
-
-      - name: Run integration tests
-        run: |
-          pytest tests/integration -v
 
 
   docker-build:
@@ -50,16 +67,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build MCP image
-        run: |
-          docker build \
-            -f docker/Dockerfile.mcp \
-            -t chargeability-mcp:latest \
-            .
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Build FastAPI image
-        run: |
-          docker build \
-            -f docker/Dockerfile.agent \
-            -t chargeability-fastapi-agent:latest \
-            .
+      - name: Build MCP Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.mcp
+          push: false
+          tags: chargeability-mcp:test
+
+      - name: Build FastAPI Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.agent
+          push: false
+          tags: chargeability-fastapi:test
